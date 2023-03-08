@@ -1,49 +1,48 @@
 <?php
+
+declare(strict_types=1);
+
+namespace App;
+
 class Document {
-
-    public $user;
-
-    public $name;
-
-    public function init($name, User $user) {
-        assert(strlen($name) > 5);
-        $this->user = $user;
-        $this->name = $name;
+    /**
+     * @param string $name
+     */
+    public function __construct(
+        private string $name
+    ) {
     }
 
-    public function getTitle() {
-        $db = Database::getInstance();
-        $row = $db->query('SELECT * FROM document WHERE name = "' . $this->name . '" LIMIT 1');
-        return $row[3]; // third column in a row
+    /**
+     * @return string
+     */
+    public function getTitle(): string 
+    {
+        $db = $this->getDatabaseInstance();
+        
+        $query = $db->prepare('SELECT title FROM document WHERE name = ?');
+        $query->execute([$this->name]);
+
+        return $query->fetchColumn();
     }
 
-    public function getContent() {
-        $db = Database::getInstance();
-        $row = $db->query('SELECT * FROM document WHERE name = "' . $this->name . '" LIMIT 1');
-        return $row[6]; // sixth column in a row
+    /**
+     * @return string
+     */
+    public function getContent(): string {
+        $db = $this->getDatabaseInstance();
+
+        $query = $db->prepare('SELECT content FROM document WHERE name = ?');
+        $query->execute([$this->name]);
+
+        return $query->fetchColumn();
     }
 
-    public static function getAllDocuments() {
-        // to be implemented later
+    /**
+     * @return Database
+     */
+    private function getDatabaseInstance(): Database
+    {
+        return Database::getInstance();
     }
-
-}
-
-class User {
-
-    public function makeNewDocument($name) {
-        $doc = new Document();
-        $doc->init($name, $this);
-        return $doc;
-    }
-
-    public function getMyDocuments() {
-        $list = array();
-        foreach (Document::getAllDocuments() as $doc) {
-            if ($doc->user == $this)
-                $list[] = $doc;
-        }
-        return $list;
-    }
-
 }
